@@ -5,14 +5,15 @@
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
         <collectionProp name="Arguments.arguments"/>
       </elementProp>
-      <boolProp name="TestPlan.functional_mode">false</boolProp>
-      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
     </TestPlan>
     <hashTree>
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Base">
-        <intProp name="ThreadGroup.num_threads">5000</intProp>
-        <intProp name="ThreadGroup.ramp_time">1</intProp>
-        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <intProp name="ThreadGroup.num_threads">2000</intProp>
+        <intProp name="ThreadGroup.ramp_time">60</intProp>
+        <longProp name="ThreadGroup.duration">120</longProp>
+        <longProp name="ThreadGroup.delay">1</longProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">false</boolProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
           <stringProp name="LoopController.loops">1</stringProp>
@@ -20,7 +21,7 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
-        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="JSR223 PreProcessor">
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="JSR223 PreProcessor" enabled="true">
           <stringProp name="scriptLanguage">groovy</stringProp>
           <stringProp name="parameters"></stringProp>
           <stringProp name="filename"></stringProp>
@@ -71,7 +72,7 @@ log.info(&quot;PostProcessor - Response Data: ${response}&quot;);</stringProp>
         </JSR223PostProcessor>
         <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request">
-          <stringProp name="HTTPSampler.domain">40.90.161.31</stringProp>
+          <stringProp name="HTTPSampler.domain">57.155.66.65</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.path">/</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
@@ -121,6 +122,275 @@ log.info(&quot;PostProcessor - Response Data: ${response}&quot;);</stringProp>
         </ResultCollector>
         <hashTree/>
         <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="POS" enabled="false">
+        <intProp name="ThreadGroup.num_threads">1000</intProp>
+        <intProp name="ThreadGroup.ramp_time">60</intProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="JSR223 PreProcessor" enabled="false">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import org.apache.jmeter.services.FileServer;
+import org.apache.jmeter.protocol.http.control.Header;
+import org.apache.jmeter.protocol.http.control.HeaderManager;
+import groovy.json.JsonSlurper;
+import groovy.json.JsonBuilder;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+// Path to the ip_addresses.properties file
+String fileName = &quot;ip_addresses.properties&quot;;
+String filePath = FileServer.getFileServer().getBaseDir() + File.separator + fileName;
+
+// Read the content of the ip_addresses.properties file
+def lines = Files.readAllLines(Paths.get(filePath));
+
+// Get the IP address corresponding to the thread number
+String ipAddress = lines[(ctx.getThreadNum() - 1) % lines.size()];
+
+// Get or create HeaderManager if it does not exist
+HeaderManager headerManager = sampler.getHeaderManager();
+if (headerManager == null) {
+    headerManager = new HeaderManager();
+    sampler.setHeaderManager(headerManager);
+}
+
+// Add or update the X-Forwarded-For header
+headerManager.removeHeaderNamed(&quot;X-Forwarded-For&quot;); // Remove if it exists
+headerManager.add(new Header(&quot;X-Forwarded-For&quot;, ipAddress)); // Add new X-Forwarded-For header
+
+// Log to confirm the IP address and header being set
+log.info(&quot;File path: &quot; + filePath);
+log.info(&quot;PreProcessor - IP Address for thread ${ctx.getThreadNum()}: ${ipAddress}&quot;);
+log.info(&quot;PreProcessor - X-Forwarded-For header set to: ${ipAddress}&quot;);</stringProp>
+        </JSR223PreProcessor>
+        <hashTree/>
+        <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="JSR223 PostProcessor" enabled="false">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">// Log the response data
+def response = prev.getResponseDataAsString();
+log.info(&quot;PostProcessor - Response Data: ${response}&quot;);</stringProp>
+        </JSR223PostProcessor>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager" enabled="false">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">mid-client-key  </stringProp>
+              <stringProp name="Header.value">B7Hx2wRkDPBPjJlPwqEWlsxt2E5vVcDd</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults" enabled="false">
+          <stringProp name="HTTPSampler.domain">nexus.antikode.dev</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.implementation">HttpClient4</stringProp>
+        </ConfigTestElement>
+        <hashTree/>
+        <RandomVariableConfig guiclass="TestBeanGUI" testclass="RandomVariableConfig" testname="Random Number" enabled="false">
+          <stringProp name="maximumValue">999999999</stringProp>
+          <stringProp name="minimumValue">100000000</stringProp>
+          <stringProp name="outputFormat"></stringProp>
+          <boolProp name="perThread">true</boolProp>
+          <stringProp name="randomSeed"></stringProp>
+          <stringProp name="variableName">random_number</stringProp>
+        </RandomVariableConfig>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request" enabled="false">
+          <stringProp name="HTTPSampler.path">/api /v1/pos/transaction</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{&#xd;
+  &quot;memberCode&quot;: &quot;&quot;,&#xd;
+  &quot;outletCode&quot;: &quot;HFMJA&quot;,&#xd;
+  &quot;tableNo&quot;: &quot;GIJ03&quot;,&#xd;
+  &quot;totalGuest&quot;: 3,&#xd;
+  &quot;openTableDate&quot;: &quot;2024-11-18&quot;,&#xd;
+  &quot;closeTableDate&quot;: &quot;2024-11-18&quot;,&#xd;
+  &quot;transDate&quot;: &quot;2024-11-18&quot;,&#xd;
+  &quot;transNo&quot;: &quot;LB1202407300007&quot;,&#xd;
+  &quot;salesNo&quot;: &quot;SLB${random_number}&quot;,&#xd;
+  &quot;splitNo&quot;: &quot;0931&quot;,&#xd;
+  &quot;discountAmount&quot;: 10000,&#xd;
+  &quot;subtotal&quot;: 100000,&#xd;
+  &quot;taxService&quot;: 10200,&#xd;
+  &quot;otherTaxTotal&quot;: 3400,&#xd;
+  &quot;vatTotal&quot;: 6800,&#xd;
+  &quot;grandTotal&quot;: 110000,&#xd;
+  &quot;remarks&quot;: &quot;something in here&quot;,&#xd;
+  &quot;transactionModeName&quot;: &quot;POS&quot;,&#xd;
+  &quot;fullName&quot;: &quot;Subagyo&quot;,&#xd;
+  &quot;email&quot;: &quot;${__RandomString(8,abcdefghijklmnopqrstuvwxyz,emailPrefix)}@gmail.com&quot;,&#xd;
+  &quot;phoneNumber&quot;: &quot;628${random_number}&quot;,&#xd;
+  &quot;channel&quot;: &quot;DINE IN (Not Inclusive)&quot;,&#xd;
+  &quot;statusID&quot;: 8,&#xd;
+  &quot;companyCode&quot;: &quot;DEV1&quot;,&#xd;
+  &quot;brandName&quot;: &quot;L Station Brand&quot;,&#xd;
+  &quot;visitPurposeID&quot;: 3,&#xd;
+  &quot;esbOrderID&quot;: &quot;10000&quot;,&#xd;
+  &quot;OrderID&quot;: &quot;10000&quot;,&#xd;
+  &quot;transDetail&quot;: [&#xd;
+    {&#xd;
+      &quot;menuCategoryId&quot;: &quot;Eat&quot;,&#xd;
+      &quot;menuCategoryDetailId&quot;: &quot;GI Portion&quot;,&#xd;
+      &quot;itemCode&quot;: &quot;GP000006&quot;,&#xd;
+      &quot;itemName&quot;: &quot;Steak&quot;,&#xd;
+      &quot;listPrice&quot;: 20000,&#xd;
+      &quot;paidPrice&quot;: 11500,&#xd;
+      &quot;price&quot;: 10000,&#xd;
+      &quot;qty&quot;: 1,&#xd;
+      &quot;package&quot;: [&#xd;
+        {&#xd;
+          &quot;menuCategoryId&quot;: &quot;Sugar&quot;,&#xd;
+          &quot;menuCategoryDetailId&quot;: &quot;Sugar&quot;,&#xd;
+          &quot;itemCode&quot;: &quot;GIM00008&quot;,&#xd;
+          &quot;itemName&quot;: &quot;Less Sugar&quot;,&#xd;
+          &quot;menuRefID&quot;: 2143,&#xd;
+          &quot;menuGroupID&quot;: 1002,&#xd;
+          &quot;paidPrice&quot;: 0,&#xd;
+          &quot;listPrice&quot;: 0,&#xd;
+          &quot;price&quot;: 0,&#xd;
+          &quot;qty&quot;: 1&#xd;
+        }&#xd;
+      ],&#xd;
+      &quot;extras&quot;: [&#xd;
+        {&#xd;
+          &quot;menuCategoryId&quot;: &quot;Syrup&quot;,&#xd;
+          &quot;menuCategoryDetailId&quot;: &quot;Syrup&quot;,&#xd;
+          &quot;itemCode&quot;: &quot;1409&quot;,&#xd;
+          &quot;itemName&quot;: &quot;Vanilla Syrup&quot;,&#xd;
+          &quot;paidPrice&quot;: 3450,&#xd;
+          &quot;listPrice&quot;: 3000,&#xd;
+          &quot;price&quot;: 3000,&#xd;
+          &quot;menuDetailID&quot;: &quot;GC000001&quot;,&#xd;
+          &quot;qty&quot;: 1&#xd;
+        }&#xd;
+      ]&#xd;
+    }&#xd;
+  ],&#xd;
+  &quot;promoClaimed&quot;: [&#xd;
+    {&#xd;
+      &quot;promotionName&quot;: &quot;UATRP10K&quot;,&#xd;
+      &quot;promotionCode&quot;: &quot;UATRP10K&quot;,&#xd;
+      &quot;discount&quot;: 10000&#xd;
+    }&#xd;
+  ],&#xd;
+  &quot;payments&quot;: [&#xd;
+    {&#xd;
+      &quot;paymentMain&quot;: &quot;1&quot;,&#xd;
+      &quot;paymentMedia&quot;: &quot;Cash&quot;,&#xd;
+      &quot;amount&quot;: 500000&#xd;
+    }&#xd;
+  ],&#xd;
+  &quot;voucherClaimed&quot;: [&#xd;
+    {&#xd;
+      &quot;voucherCode&quot;: &quot;INF11TRGL&quot;,&#xd;
+      &quot;voucherName&quot;: &quot;Gratis ongkir&quot;,&#xd;
+      &quot;discount&quot;: 20000&#xd;
+    }&#xd;
+  ]&#xd;
+}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="false">
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+          <objProp>
+            <name>saveConfig</name>
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+          </objProp>
+          <stringProp name="filename"></stringProp>
+        </ResultCollector>
+        <hashTree/>
+        <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="false">
           <boolProp name="ResultCollector.error_logging">false</boolProp>
           <objProp>
             <name>saveConfig</name>
